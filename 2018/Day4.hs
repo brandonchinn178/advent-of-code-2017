@@ -1,7 +1,5 @@
 {- stack script
     --resolver lts-12.12
-    --package containers
-    --package split
 -}
 {-# LANGUAGE MultiWayIf #-}
 

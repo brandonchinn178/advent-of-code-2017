@@ -1,6 +1,5 @@
 {- stack script
     --resolver lts-12.12
-    --package split
 -}
 
 {-# LANGUAGE RecordWildCards #-}
