@@ -11,3 +11,9 @@ See `2017/README.md`
 `cd` into the `2018` directory and run `stack runhaskell <file>`. If it
 complains about missing packages, run `stack build` with the corresponding
 packages (they should be fairly standard libraries).
+
+## 2019
+
+`cd` into the `2019` directory and run `stack <file>`. If it complains about
+missing packages, run `stack build` with the corresponding packages (they
+should be fairly standard libraries).
