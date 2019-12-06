@@ -14,6 +14,6 @@ packages (they should be fairly standard libraries).
 
 ## 2019
 
-`cd` into the `2019` directory and run `stack <file>`. If it complains about
-missing packages, run `stack build` with the corresponding packages (they
+`cd` into the `2019` directory and run `stack runghc <file>`. If it complains
+about missing packages, run `stack build` with the corresponding packages (they
 should be fairly standard libraries).
