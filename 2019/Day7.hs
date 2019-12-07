@@ -34,19 +34,21 @@ part2 = maximumBy (compare `on` fst) . runAllPhaseSettings (5, 9)
 type PhaseSettings = [Int]
 
 runAllPhaseSettings :: (Int, Int) -> Program -> [(Int, PhaseSettings)]
-runAllPhaseSettings phaseSettingRange program = map (runPhaseSettings program &&& id) allPhaseSettings
+runAllPhaseSettings (start, end) program = map (runPhaseSettings program &&& id) allPhaseSettings
   where
-    allPhaseSettings = let (start, end) = phaseSettingRange in permutations [start..end]
+    allPhaseSettings = permutations [start..end]
 
 runPhaseSettings :: Program -> [Int] -> Int
-runPhaseSettings program [a,b,c,d,e] =
-  let outputsA = runProgram program (a : 0 : outputsE)
-      outputsB = runProgram program (b : outputsA)
-      outputsC = runProgram program (c : outputsB)
-      outputsD = runProgram program (d : outputsC)
-      outputsE = runProgram program (e : outputsD)
-  in last outputsE
-runPhaseSettings _ _ = error "runPhaseSettings only accepts exactly 5 phase settings"
+runPhaseSettings program phaseSettings = last outputsFromLastAmp
+  where
+    outputsFromLastAmp = last allOutputs
+    allOutputs = runAmps (0 : outputsFromLastAmp) phaseSettings
+
+    -- reimplementing scanl for readability
+    runAmps _ [] = []
+    runAmps inputs (phaseSetting : rest) =
+      let outputs = runProgram program $ phaseSetting : inputs
+      in outputs : runAmps outputs rest
 
 {- Program -}
 
@@ -163,7 +165,18 @@ getCommand program position =
     buildJump f = f (parseParameter 0) (parseParameter 1)
     buildComp f = f (parseParameter 0) (parseParameter 1) (rawParameter 2)
 
+{- Utilities -}
+
 -- | Get the given digit from the number, starting from the least significant
 -- digit.
 getDigit :: Int -> Int -> Int
 getDigit digit x = (x `div` 10 ^ digit) `mod` 10
+
+mapFirst :: (a -> a) -> [a] -> [a]
+mapFirst _ [] = error "Cannot call mapFirst on an empty list"
+mapFirst f (x:xs) = f x : xs
+
+-- Move the last element in the list to the front
+unshift :: [a] -> [a]
+unshift [] = error "unshift called on an empty list"
+unshift l = last l : init l
