@@ -13,31 +13,56 @@ import Data.List.Split (splitOn)
 
 main :: IO ()
 main = do
-  input <- map readPosition . lines <$> readFile "Day12.txt"
+  input <- map readCoordinate . lines <$> readFile "Day12.txt"
 
   print $ part1 input
+  print $ part2
+    [ [-1, 0, 2]
+    , [2, -10, -7]
+    , [4, -8, 8]
+    , [3, 5, -1]
+    ]
+  print $ part2
+    [ [-8, -10, 0]
+    , [5, 5, 10]
+    , [2, -7, 3]
+    , [9, -8, -3]
+    ]
 
-part1 :: [Position] -> Int
+part1 :: [Coordinate] -> Int
 part1 = getSystemEnergy . (!! 1000) . iterate updateSystem . map (, [0, 0, 0])
+
+part2 :: [Coordinate] -> Integer
+part2 = go Set.empty . iterate updateSystem . map (, [0, 0, 0])
+  where
+    go _ [] = error "unreachable"
+    go seen (curr:rest) = if curr `Set.member` seen
+      then fromIntegral $ length seen
+      else go (Set.insert curr seen) rest
 
 {- System -}
 
--- Guaranteed to have three elements
-type Velocity = [Int]
+type PerMoon a = [a]
+type PerAxis a = [a] -- Exactly 3 elements
 
-type System = [(Position, Velocity)]
+type Velocity = Int
+type Vector = PerAxis Velocity
 
-getPositions :: System -> [Position]
-getPositions = map fst
+type System = PerMoon (Coordinate, Vector)
+
+getCoordinates :: System -> PerMoon Coordinate
+getCoordinates = map fst
 
 updateSystem :: System -> System
 updateSystem = applyMovement . applyGravity
   where
     applyGravity :: System -> System
-    applyGravity = mapWithOthers $ \(currPosition, currVelocity) others ->
-      (currPosition, foldl (updateVelocity currPosition) currVelocity (getPositions others))
+    applyGravity system =
+      [ (position, foldl (updateVelocity position) velocity (getCoordinates system))
+      | (position, velocity) <- system
+      ]
 
-    updateVelocity :: Position -> Velocity -> Position -> Velocity
+    updateVelocity :: Coordinate -> Vector -> Coordinate -> Vector
     updateVelocity = zipWith3 $ \currPosition currVelocity otherPosition ->
       let delta = case compare currPosition otherPosition of
             LT -> 1
@@ -51,28 +76,16 @@ updateSystem = applyMovement . applyGravity
 getSystemEnergy :: System -> Int
 getSystemEnergy = sum . map (uncurry getEnergy)
   where
-    getEnergy :: Position -> Velocity -> Int
+    getEnergy :: Coordinate -> Vector -> Int
     getEnergy = (*) `on` (sum . map abs)
 
 {- Position -}
 
--- Guaranteed to have three elements
-type Position = [Int]
+type Position = Int
+type Coordinate = PerAxis Position
 
-readPosition :: String -> Position
-readPosition = map parseNum . splitOn ", " . stripBrackets
+readCoordinate :: String -> Coordinate
+readCoordinate = map parseNum . splitOn ", " . stripBrackets
   where
     stripBrackets = dropWhileEnd (== '>') . dropWhile (== '<')
     parseNum = read @Int . last . splitOn "="
-
-{- Utilities -}
-
--- | Return a list with each element in the list paired with all the other
--- elements in the list.
---
--- mapWithOthers f [1,2,3] == [f 1 [2, 3], f 2 [1, 3], f 3 [1, 2]]
-mapWithOthers :: (a -> [a] -> b) -> [a] -> [b]
-mapWithOthers f = go []
-  where
-    go _ [] = []
-    go past (x:xs) = f x (past ++ xs) : go (past ++ [x]) xs
